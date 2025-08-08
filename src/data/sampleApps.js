@@ -57,7 +57,7 @@ export const sampleApps = [
   {
     id: '2',
     title: 'Solar System Explorer',
-    description: 'Take a journey through our solar system with interactive 3D models and fascinating facts about each planet.',
+    description: 'Take a journey through our solar system with interactive 3D models and fascinating facts about each planet!',
     author_id: 'user2',
     author_name: 'Dr. James Chen',
     tags: ['science', 'astronomy', 'space', 'grade-4', 'grade-5', 'grade-6', '3d'],
