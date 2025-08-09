@@ -10,6 +10,81 @@ import Notification from '../components/Notification'
 import { sampleApps } from '../data/sampleApps'
 import { appsAPI } from '../lib/supabase' // Uncomment when Supabase is set up
 
+// Add this at the top of your src/app/page.js (right after imports):
+
+console.log('🔍 Environment Check:')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY length:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length)
+
+// Replace your useEffect with this debug version:
+useEffect(() => {
+  const loadApps = async () => {
+    console.log('🚀 === STARTING APP LOAD DEBUG ===')
+    
+    // Check if Supabase client was created properly
+    console.log('Supabase client:', supabase)
+    console.log('Supabase client URL:', supabase?.supabaseUrl)
+    console.log('Supabase client Key:', supabase?.supabaseKey?.substring(0, 20) + '...')
+    
+    try {
+      console.log('🧪 Testing basic Supabase connection...')
+      
+      // Most basic possible query
+      const { data, error, status, statusText } = await supabase
+        .from('apps')
+        .select('id, title')
+        .limit(1)
+      
+      console.log('Basic query result:', {
+        data,
+        error,
+        status,
+        statusText,
+        dataType: typeof data,
+        dataLength: data?.length
+      })
+      
+      if (error) {
+        console.error('❌ Basic query failed:', error)
+        throw new Error(`Supabase query failed: ${error.message}`)
+      }
+      
+      if (data) {
+        console.log('✅ Basic query succeeded! Data:', data)
+        
+        // Now try the full query
+        console.log('🔄 Trying full apps query...')
+        const fullResult = await appsAPI.getApps()
+        console.log('Full query result:', fullResult)
+        
+        if (fullResult && fullResult.length > 0) {
+          console.log('✅ SUCCESS! Got apps from database')
+          setApps(fullResult)
+          setFilteredApps(fullResult)
+          showNotification(`✅ Loaded ${fullResult.length} apps from database!`)
+        } else {
+          console.log('⚠️ Full query returned empty but basic query worked')
+          throw new Error('API returned empty results')
+        }
+      }
+      
+    } catch (error) {
+      console.error('💥 Database connection failed:', error)
+      console.log('🔄 Falling back to sample data')
+      setApps(sampleApps)
+      setFilteredApps(sampleApps)
+      showNotification(`❌ Database failed: ${error.message}`)
+    } finally {
+      setLoading(false)
+      console.log('🏁 === APP LOAD DEBUG COMPLETE ===')
+    }
+  }
+
+  loadApps()
+}, [])
+
 export default function HomePage() {
   // State management
   const [apps, setApps] = useState([])
