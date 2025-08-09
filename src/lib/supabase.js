@@ -11,10 +11,7 @@ export const appsAPI = {
   async getApps(filters = {}) {
     let query = supabase
       .from('apps')
-      .select(`
-        *,
-        profiles(name, avatar_url)
-      `)
+      .select('*')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
 
@@ -28,7 +25,14 @@ export const appsAPI = {
 
     const { data, error } = await query
     if (error) throw error
-    return data
+    
+    // Add author_name field since we're not joining profiles yet
+    const appsWithAuthors = data.map(app => ({
+      ...app,
+      author_name: 'Anonymous User'
+    }))
+    
+    return appsWithAuthors
   },
 
   // Get single app
