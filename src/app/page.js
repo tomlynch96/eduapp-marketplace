@@ -215,7 +215,7 @@ export default function HomePage() {
       const newApp = {
         title: appData.title,
         description: appData.description,
-        author_id: 'demo-user-123', // Use null for now
+        author_id: '00000000-0000-0000-0000-000000000000', // Use null for now
         tags: appData.tags.split(',').map(t => t.trim()).filter(t => t),
         rating: 0,
         review_count: 0,
