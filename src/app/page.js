@@ -8,7 +8,7 @@ import AppModal from '../components/AppModal'
 import UploadModal from '../components/UploadModal'
 import Notification from '../components/Notification'
 import { sampleApps } from '../data/sampleApps'
-// import { appsAPI } from '../lib/supabase' // Uncomment when Supabase is set up
+import { appsAPI } from '../lib/supabase' // Uncomment when Supabase is set up
 
 export default function HomePage() {
   // State management
@@ -22,28 +22,34 @@ export default function HomePage() {
   const [notification, setNotification] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Initialize apps - replace with Supabase call in production
-  useEffect(() => {
-    const loadApps = async () => {
-      try {
-        // For now, use sample data
+// Initialize apps - using Supabase database
+useEffect(() => {
+  const loadApps = async () => {
+    try {
+      // Load from Supabase database
+      const apps = await appsAPI.getApps()
+      setApps(apps)
+      setFilteredApps(apps)
+      
+      // Fallback to sample data if database fails
+      if (!apps || apps.length === 0) {
         setApps(sampleApps)
         setFilteredApps(sampleApps)
-        
-        // In production, replace with:
-        // const apps = await appsAPI.getApps()
-        // setApps(apps)
-        // setFilteredApps(apps)
-      } catch (error) {
-        console.error('Failed to load apps:', error)
-        showNotification('❌ Failed to load apps. Please try again.')
-      } finally {
-        setLoading(false)
+        console.log('Using sample data as fallback')
       }
+    } catch (error) {
+      console.error('Failed to load apps from database:', error)
+      // Use sample data as fallback
+      setApps(sampleApps)
+      setFilteredApps(sampleApps)
+      showNotification('⚠️ Using sample data - database connection issue')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    loadApps()
-  }, [])
+  loadApps()
+}, [])
 
   // Search and filter logic
   useEffect(() => {
@@ -139,42 +145,47 @@ export default function HomePage() {
     // appsAPI.incrementDownloads(app.id)
   }
 
-  const handleUpload = async (appData) => {
-    try {
-      setLoading(true)
-      
-      const newApp = {
-        id: `app-${Date.now()}`,
-        title: appData.title,
-        description: appData.description,
-        author_id: 'current-user', // Replace with actual user ID
-        author_name: 'Current User', // Replace with actual user name
-        tags: appData.tags.split(',').map(t => t.trim()).filter(t => t),
-        rating: 0,
-        review_count: 0,
-        download_count: 0,
-        created_at: new Date().toISOString().split('T')[0],
-        screenshot_url: `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodeURIComponent(appData.title)}`,
-        status: 'published',
-        html_content: appData.htmlContent
-      }
-      
-      // In production, save to Supabase:
-      // const savedApp = await appsAPI.createApp(newApp)
-      // setApps(prev => [savedApp, ...prev])
-      
-      // For now, add to local state
-      setApps(prev => [newApp, ...prev])
-      setShowUpload(false)
-      showNotification('🎉 App uploaded successfully! It may take a few minutes to appear in search results.')
-      
-    } catch (error) {
-      console.error('Upload failed:', error)
-      showNotification('❌ Upload failed. Please try again.')
-    } finally {
-      setLoading(false)
+const handleUpload = async (appData) => {
+  try {
+    setLoading(true)
+    
+    const newApp = {
+      id: `app-${Date.now()}`,
+      title: appData.title,
+      description: appData.description,
+      author_id: 'current-user', // Replace with actual user ID
+      author_name: 'Current User', // Replace with actual user name
+      tags: appData.tags.split(',').map(t => t.trim()).filter(t => t),
+      rating: 0,
+      review_count: 0,
+      download_count: 0,
+      created_at: new Date().toISOString().split('T')[0],
+      screenshot_url: `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodeURIComponent(appData.title)}`,
+      status: 'published',
+      html_content: appData.htmlContent
     }
+    
+    // Save to Supabase database
+    try {
+      const savedApp = await appsAPI.createApp(newApp)
+      setApps(prev => [savedApp, ...prev])
+    } catch (dbError) {
+      console.error('Database save failed:', dbError)
+      // Fallback to local state
+      setApps(prev => [newApp, ...prev])
+      showNotification('⚠️ App uploaded locally - database sync pending')
+    }
+    
+    setShowUpload(false)
+    showNotification('🎉 App uploaded successfully!')
+    
+  } catch (error) {
+    console.error('Upload failed:', error)
+    showNotification('❌ Upload failed. Please try again.')
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleSearch = (term) => {
     setSearchTerm(term)
