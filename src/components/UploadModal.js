@@ -129,7 +129,7 @@ export default function UploadModal({ onClose, onUpload, loading }) {
       className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b bg-gray-50">
           <div>
@@ -145,7 +145,7 @@ export default function UploadModal({ onClose, onUpload, loading }) {
           </button>
         </div>
         
-        <div className="flex h-[80vh]">
+        <div className="flex h-[60vh]">
           {/* Form Section */}
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="space-y-6">
@@ -275,24 +275,7 @@ export default function UploadModal({ onClose, onUpload, loading }) {
               </div>
             </div>
           </div>
-          </div>
-              
-              {/* TEMPORARY DEBUG SECTION */}
-              <div className="bg-red-100 p-4 border border-red-300 rounded">
-                <h3 className="text-red-800 font-bold">DEBUG INFO:</h3>
-                <p>Title: {formData.title}</p>
-                <p>Description: {formData.description}</p>
-                <p>HTML: {formData.htmlContent ? 'Has content' : 'Empty'}</p>
-                <p>Loading: {loading ? 'true' : 'false'}</p>
-                <button 
-                  onClick={handleSubmit}
-                  className="bg-red-500 text-white px-4 py-2 rounded mt-2"
-                >
-                  DEBUG SUBMIT
-                </button>
-              </div>
-              
-            </div>
+          
           {/* Preview Section */}
           {showPreview && formData.htmlContent && (
             <div className="w-1/2 border-l bg-gray-50">
