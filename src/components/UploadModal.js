@@ -275,7 +275,24 @@ export default function UploadModal({ onClose, onUpload, loading }) {
               </div>
             </div>
           </div>
-          
+          </div>
+              
+              {/* TEMPORARY DEBUG SECTION */}
+              <div className="bg-red-100 p-4 border border-red-300 rounded">
+                <h3 className="text-red-800 font-bold">DEBUG INFO:</h3>
+                <p>Title: {formData.title}</p>
+                <p>Description: {formData.description}</p>
+                <p>HTML: {formData.htmlContent ? 'Has content' : 'Empty'}</p>
+                <p>Loading: {loading ? 'true' : 'false'}</p>
+                <button 
+                  onClick={handleSubmit}
+                  className="bg-red-500 text-white px-4 py-2 rounded mt-2"
+                >
+                  DEBUG SUBMIT
+                </button>
+              </div>
+              
+            </div>
           {/* Preview Section */}
           {showPreview && formData.htmlContent && (
             <div className="w-1/2 border-l bg-gray-50">
