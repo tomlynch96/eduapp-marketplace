@@ -25,6 +25,9 @@ export default function HomePage() {
 // Initialize apps - using Supabase database
 useEffect(() => {
   const loadApps = async () => {
+    // DEBUG: Check if environment variables are loaded
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     try {
       // Load from Supabase database
       const apps = await appsAPI.getApps()
