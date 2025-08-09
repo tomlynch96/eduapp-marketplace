@@ -23,29 +23,86 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
 
 // Initialize apps - using Supabase database
+// Replace the entire useEffect in src/app/page.js with this:
+
 useEffect(() => {
   const loadApps = async () => {
-    // DEBUG: Check if environment variables are loaded
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('Supabase Key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('🔍 === COMPLETE SUPABASE DEBUG ===')
+    
+    // 1. Check environment variables
+    console.log('Environment variables:')
+    console.log('- NODE_ENV:', process.env.NODE_ENV)
+    console.log('- SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('- SUPABASE_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+    console.log('- SUPABASE_KEY length:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length || 'undefined')
+    console.log('- SUPABASE_KEY start:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20) || 'undefined')
+    
+    // 2. Check if Supabase client exists
+    console.log('Supabase client:', typeof supabase)
+    console.log('Supabase URL from client:', supabase?.supabaseUrl)
+    
+    // 3. Try the most basic possible connection test
     try {
-      // Load from Supabase database
-      const apps = await appsAPI.getApps()
-      setApps(apps)
-      setFilteredApps(apps)
+      console.log('🧪 Testing basic Supabase connection...')
       
-      // Fallback to sample data if database fails
-      if (!apps || apps.length === 0) {
-        setApps(sampleApps)
-        setFilteredApps(sampleApps)
-        console.log('Using sample data as fallback')
+      const result = await supabase.from('apps').select('count', { count: 'exact' })
+      console.log('Count query result:', result)
+      
+      if (result.error) {
+        console.error('❌ Count query failed:', result.error)
+        throw new Error(`Basic connection failed: ${result.error.message}`)
       }
+      
+      console.log('✅ Basic connection successful!')
+      console.log('Apps count in database:', result.count)
+      
+      // 4. Try to get actual data
+      console.log('🔄 Fetching actual app data...')
+      const { data: apps, error: appsError } = await supabase
+        .from('apps')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      console.log('Apps query result:', { apps, appsError })
+      
+      if (appsError) {
+        throw new Error(`Apps query failed: ${appsError.message}`)
+      }
+      
+      if (apps && apps.length > 0) {
+        console.log('✅ SUCCESS! Found apps in database:', apps.length)
+        console.log('First app:', apps[0])
+        
+        // Process apps with required fields
+        const processedApps = apps.map(app => ({
+          ...app,
+          author_name: app.author_name || 'Database User'
+        }))
+        
+        setApps(processedApps)
+        setFilteredApps(processedApps)
+        showNotification(`✅ Loaded ${apps.length} apps from Supabase!`)
+        
+      } else {
+        console.log('⚠️ Database connected but no apps found')
+        setApps([])
+        setFilteredApps([])
+        showNotification('📝 Database connected but empty')
+      }
+      
     } catch (error) {
-      console.error('Failed to load apps from database:', error)
-      // Use sample data as fallback
+      console.error('💥 Supabase connection completely failed:', error)
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+      
+      // Fall back to sample data
+      console.log('🔄 Using sample data as fallback')
       setApps(sampleApps)
       setFilteredApps(sampleApps)
-      showNotification('⚠️ Using sample data - database connection issue')
+      showNotification(`❌ Database failed: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -53,6 +110,63 @@ useEffect(() => {
 
   loadApps()
 }, [])
+
+// Also add this debugging to your handleUpload function:
+const handleUpload = async (appData) => {
+  console.log('🚀 === UPLOAD DEBUG ===')
+  console.log('Upload data:', appData)
+  
+  try {
+    setLoading(true)
+    
+    const newApp = {
+      title: appData.title,
+      description: appData.description,
+      author_id: null, // Use null for now
+      tags: appData.tags.split(',').map(t => t.trim()).filter(t => t),
+      rating: 0,
+      review_count: 0,
+      download_count: 0,
+      screenshot_url: `https://via.placeholder.com/400x300/6366f1/ffffff?text=${encodeURIComponent(appData.title)}`,
+      status: 'published',
+      html_content: appData.htmlContent
+    }
+    
+    console.log('Processed app data:', newApp)
+    
+    // Test direct Supabase insert
+    console.log('🧪 Testing direct Supabase insert...')
+    const { data: insertedApp, error: insertError } = await supabase
+      .from('apps')
+      .insert([newApp])
+      .select()
+      .single()
+    
+    console.log('Insert result:', { insertedApp, insertError })
+    
+    if (insertError) {
+      throw new Error(`Insert failed: ${insertError.message}`)
+    }
+    
+    console.log('✅ Upload successful!')
+    
+    // Add to local state
+    const appWithAuthor = {
+      ...insertedApp,
+      author_name: 'Demo User'
+    }
+    
+    setApps(prev => [appWithAuthor, ...prev])
+    setShowUpload(false)
+    showNotification('🎉 App uploaded successfully!')
+    
+  } catch (error) {
+    console.error('💥 Upload failed:', error)
+    showNotification(`❌ Upload failed: ${error.message}`)
+  } finally {
+    setLoading(false)
+  }
+}
 
   // Search and filter logic
   useEffect(() => {
